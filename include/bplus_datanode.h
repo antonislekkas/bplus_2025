@@ -3,26 +3,18 @@
 
 #include "record.h"
 
-// Max records in a leaf node.
-// Block size 512. Node overhead ~8 bytes (count, next).
-// Record size depends on schema, but max is fixed.
-// Let's assume max record size is roughly 128 bytes for safety,
-// so 512 / 128 = 4.
-// A more precise calculation would be:
-// sizeof(Record) = 5 * (4 + 4 + 20) = 140 bytes? No, Record is a struct of union.
-// Record is FieldValue[5]. FieldValue is union {int, float, char[20]}. max is 20.
-// So Record size is 5 * 20 = 100 bytes.
-// 512 - 8 = 504. 504 / 100 = 5 records.
-// Let's set it to 4 to be safe and leave room.
+// max records in leaf. block is 512 bytes
+// record size is ~~ 100 bytes (5 fields * 20 bytes)
+// so 512 / 100 is ~~ 5. we use 4 to be safe 
 #define MAX_RECORDS_LEAF 4
 
 typedef struct {
-  int count;                      // Number of records currently in the node
-  int next_block_id;              // Block ID of the next leaf (-1 if none)
-  Record records[MAX_RECORDS_LEAF]; // Array of records
+  int count;                      // number of records
+  int next_block_id;              // next leaf block id
+  Record records[MAX_RECORDS_LEAF]; // records array
 } DataNode;
 
-/* Helper function declarations */
+// helper funcs
 void datanode_init(DataNode *node);
 int datanode_find_insert_pos(const DataNode *node, const TableSchema *schema, int key);
 void datanode_insert_at(DataNode *node, int pos, const Record *record);
